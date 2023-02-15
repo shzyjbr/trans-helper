@@ -1,0 +1,22 @@
+const REM_UNIT = 120
+const DESIGN_WIDTH = 1200 // 设计稿的宽
+const DESIGN_HEIGHT = 800 // 设计稿的高
+
+const DESIGN_WIDTH_SMALL = 1200
+const DESIGN_HEIGHT_SMALL = 800
+
+const DESIGN_ARC_BALL = 80
+
+const BASE_WIN_WIDTH = 1920 // 标准分辨率宽
+const BASE_WIN_HEIGHT = 1200 // 标准分辨率高
+
+module.exports = {
+    REM_UNIT,
+    DESIGN_WIDTH,
+    DESIGN_HEIGHT,
+    DESIGN_WIDTH_SMALL,
+    DESIGN_HEIGHT_SMALL,
+    DESIGN_ARC_BALL,
+    BASE_WIN_WIDTH,
+    BASE_WIN_HEIGHT
+}
