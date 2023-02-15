@@ -109,6 +109,7 @@ function receiveFile(socket, dir) {
         socket.pipe(fileToWrite)
         fileToWrite.on('finish', () => {
             console.log('finish write!')
+            // 可以在这里回送给客户端文件传输完成的通知
         })
 
     });
