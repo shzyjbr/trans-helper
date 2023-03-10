@@ -2,10 +2,10 @@
 const { parentPort, workerData, isMainThread } = require("worker_threads");
 const dgram = require('dgram')
 
-
+let state = workerData.state
 
 function repeatSend() {
-    const message = Buffer.from(`zzk&abigail:${workerData.state}`);
+    const message = Buffer.from(`zzk&abigail:${state}`);
     const port = workerData.registerPort
     var socket = dgram.createSocket("udp4");
 
@@ -14,6 +14,7 @@ function repeatSend() {
         socket.setBroadcast(true);
 
     });
+    console.log("发送上线消息:"+`zzk&abigail:${state}`)
     socket.send(message, port, '255.255.255.255', function (err, bytes) {
 
         socket.close();
@@ -25,6 +26,12 @@ function repeatSend() {
         repeatSend()
     }, 2000)
 }
+
+// 用于改变保存路径
+parentPort.on('message', (_state) => {
+    console.log('state change:', _state);
+    state = _state
+});
 
 repeatSend()
 

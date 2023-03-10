@@ -16,7 +16,16 @@ const USER_HOME = process.env.HOME || process.env.USERPROFILE
 
 const settingfilePath = path.join(USER_HOME, 'trans-helper.txt')
 let saveDir = getSettingContent(settingfilePath, USER_HOME)
-
+// 注册服务
+const registerPort = 6666
+const fileServerPort = 9999
+// step1：广播自己的上下线消息 
+const onlineThread = new Worker(path.join(__dirname, "./worker/registerWorker.js"), { workerData: { registerPort: registerPort, state: 'online' } });
+// step2: 监听其他人上下线消息
+const registerThread = new Worker(path.join(__dirname, "./worker/stateServer.js"), { workerData: { registerPort: registerPort } });
+// step3: 创建接受文件的serverSocket
+// 注意： 这种方式是值传递，也就是copy一个副本过去， 不是共享内存
+const fileServerThread = new Worker(path.join(__dirname, "./worker/fileServer.js"), { workerData: { fileServerPort: fileServerPort, fileSaveDir: saveDir } });
 const createWindow = () => {
   const bounds = screen.getPrimaryDisplay().bounds
   const winW = Math.floor((bounds.width / BASE_WIN_WIDTH) * DESIGN_WIDTH)
@@ -41,16 +50,7 @@ const createWindow = () => {
   if (NODE_ENV == "development") {
     win.webContents.openDevTools();
   };
-  // 注册服务
-  const registerPort = 6666
-  const fileServerPort = 9999
-  // step1：广播自己的上下线消息 
-  const onlineThread = new Worker(path.join(__dirname, "./worker/registerWorker.js"), { workerData: { registerPort: registerPort, state: 'online' } });
-  // step2: 监听其他人上下线消息
-  const registerThread = new Worker(path.join(__dirname, "./worker/stateServer.js"), { workerData: { registerPort: registerPort } });
-  // step3: 创建接受文件的serverSocket
-  // 注意： 这种方式是值传递，也就是copy一个副本过去， 不是共享内存
-  const fileServerThread = new Worker(path.join(__dirname, "./worker/fileServer.js"), { workerData: { fileServerPort: fileServerPort, fileSaveDir: saveDir } });
+
   registerThread.on("message", result => {
     // result 可以保持传递过来的类型
     // console.log(`registerThread in main.js, Result: ${Array.from(result)}`);
@@ -119,22 +119,33 @@ const createWindow = () => {
   ipcMain.handle('getMainThreadSaveDir', (e) => {
     win.webContents.send("getSaveDir", saveDir)
   })
+
+  ipcMain.handle('offline', (e) => {
+    onlineThread.postMessage("offline")
+  })
 };
 
 
 app.whenReady().then(() => {
-  createWindow();
+  createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createWindow()
     }
-  });
-});
+  })
+})
 
-app.on('window-all-closed', () => {
+function sleep(ms) {
+  return new Promise(resolve=>setTimeout(resolve, ms))
+}
+
+app.on('window-all-closed',async () => {
   if (process.platform !== 'darwin') {
-    app.quit();
+    // 发送下线通知
+    ipcRenderer.invoke("offline")
+    await sleep(1500)
+    app.quit()
   }
 });
 
