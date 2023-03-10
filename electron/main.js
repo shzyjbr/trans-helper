@@ -5,6 +5,7 @@ const { app, BrowserWindow, protocol, screen, ipcMain, shell, dialog, ipcRendere
 const { Worker } = require('worker_threads')
 const { fs } = require('fs')
 const path = require('path')
+const dgram = require('dgram')
 
 const { sendFileByNetwork, getSettingContent, writeSettingContent, sendByNetwork } = require('./transUtils')
 
@@ -136,15 +137,20 @@ app.whenReady().then(() => {
   })
 })
 
-function sleep(ms) {
-  return new Promise(resolve=>setTimeout(resolve, ms))
-}
 
-app.on('window-all-closed',async () => {
+app.on('window-all-closed',() => {
   if (process.platform !== 'darwin') {
     // 发送下线通知
-    ipcRenderer.invoke("offline")
-    await sleep(1500)
+    const message = Buffer.from(`zzk&abigail:offline`);
+    var socket = dgram.createSocket("udp4");
+    socket.bind(function () {
+        socket.setBroadcast(true);
+    });
+    console.log("发送离线消息:"+"zzk&abigail:offline")
+    socket.send(message, registerPort, '255.255.255.255', function (err, bytes) {
+        socket.close();
+    });
+    setTimeout(() => console.log("休眠一会"), 500)
     app.quit()
   }
 });

@@ -37,8 +37,12 @@ server.on("message", function (msg, rinfo) {
             // 下线消息
         } else if (msg.toString() === 'zzk&abigail:offline') {
             // 下线
-            if (ipList.has(rinfo.address))
+            if (ipList.has(rinfo.address)){
+                console.log('下线ip:', rinfo.address)
                 ipList.delete(rinfo.address)
+
+            }
+                
         }
     }
 
